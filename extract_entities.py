@@ -51,9 +51,19 @@ def extract_entities_from_text(text, filename):
         messages=[
             {
                 "role": "system",
-                "content": """You are an expert at extracting structured information from payslip documents.
+                "content": """You are an expert at extracting structured information from German and English payslip documents.
 Extract entities and relationships from the provided payslip text.
 Always respond with valid JSON only — no markdown, no explanation, just the JSON object.
+
+IMPORTANT RULES FOR EXTRACTION:
+- For company names: always use the full official legal name as it appears on the document
+- For insurance providers: always use "DAK Gesundheit" if you see DAK, DAK-Gesundheit, or any DAK variant
+- For bank names: use the full official bank name (e.g. "Sparkasse Heidelberg", "N26 Bank Berlin")
+- For salary figures: extract the exact numeric value without currency symbols
+- For months: always use three letter English abbreviations (Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec)
+- For years: always use four digit year as a string (e.g. "2023")
+- If a value is not clearly present in the document, use 0.0 for numbers and null for strings
+- Never guess or estimate values — only extract what is explicitly stated
 
 Return this exact structure:
 {
@@ -63,18 +73,18 @@ Return this exact structure:
         "address": "full address if available"
     },
     "company": {
-        "name": "company name",
+        "name": "full official company name",
         "city": "company city if available"
     },
     "bank": {
-        "name": "bank name"
+        "name": "full official bank name"
     },
     "insurance_provider": {
-        "name": "health insurance provider name"
+        "name": "full official insurance provider name"
     },
     "document": {
-        "month": "month abbreviation e.g. Feb",
-        "year": "year as string e.g. 2026",
+        "month": "three letter month abbreviation",
+        "year": "four digit year as string",
         "period": "payment period if available",
         "payment_date": "payment date if available",
         "gross_salary": 0.0,
