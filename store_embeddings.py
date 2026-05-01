@@ -13,11 +13,18 @@ collection = client.get_or_create_collection(name=COLLECTION_NAME)
 print(f"Connected to ChromaDB collection: {COLLECTION_NAME}")
 
 def store_chunks(chunks, filename):
-    """Stores chunks with embeddings into ChromaDB."""
+    """Stores chunks with embeddings and metadata into ChromaDB."""
     ids = []
     embeddings = []
     documents = []
     metadatas = []
+
+    # Extract employer, month, year from filename
+    stem = Path(filename).stem
+    parts = stem.split("_")
+    employer = parts[0] if len(parts) > 0 else "unknown"
+    month = parts[1] if len(parts) > 1 else "unknown"
+    year = parts[2] if len(parts) > 2 else "unknown"
 
     for chunk in chunks:
         chunk_id = f"{filename}_chunk_{chunk['chunk_number']}"
@@ -27,7 +34,10 @@ def store_chunks(chunks, filename):
         documents.append(chunk["content"])
         metadatas.append({
             "source_file": chunk["source_file"],
-            "chunk_number": chunk["chunk_number"]
+            "chunk_number": chunk["chunk_number"],
+            "employer": employer,
+            "month": month,
+            "year": year
         })
 
     collection.add(
