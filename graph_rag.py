@@ -44,6 +44,7 @@ def classify_question(state: GraphRAGState) -> GraphRAGState:
     
     response = openai_client.chat.completions.create(
         model="gpt-4o-mini",
+        temperature=0,
         messages=[
             {
                 "role": "system",
@@ -149,6 +150,7 @@ def query_knowledge_graph(state: GraphRAGState) -> GraphRAGState:
     
     response = openai_client.chat.completions.create(
         model="gpt-4o-mini",
+        temperature=0,
         messages=[
             {"role": "system", "content": GRAPH_SCHEMA},
             {"role": "user", "content": f"Generate a Cypher query for: {state['question']}"}
@@ -236,6 +238,7 @@ def generate_answer(state: GraphRAGState) -> GraphRAGState:
     
     response = openai_client.chat.completions.create(
         model="gpt-4o-mini",
+        temperature=0,
         messages=[
             {
                 "role": "system",
