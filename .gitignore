@@ -10,3 +10,7 @@ documents/
 # Python cache
 __pycache__/
 *.pyc
+
+chunks/
+
+embeddings/
