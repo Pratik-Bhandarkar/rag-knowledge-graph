@@ -2,8 +2,8 @@ from sentence_transformers import SentenceTransformer
 from pathlib import Path
 import json
 
-CHUNKS_FOLDER = Path(r"D:\Personal\Projects\rag-knowledge-graph\chunks")
-EMBEDDINGS_FOLDER = Path(r"D:\Personal\Projects\rag-knowledge-graph\embeddings")
+CHUNKS_FOLDER = Path(__file__).parent / "chunks"
+EMBEDDINGS_FOLDER = Path(__file__).parent / "embeddings"
 
 MODEL_NAME = "paraphrase-multilingual-MiniLM-L12-v2"
 

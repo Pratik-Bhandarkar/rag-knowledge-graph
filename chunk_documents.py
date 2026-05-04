@@ -3,8 +3,8 @@ import json
 import re
 from pathlib import Path
 
-PAYSLIPS_FOLDER = Path(r"D:\Personal\Projects\rag-knowledge-graph\documents\payslips")
-CHUNKS_FOLDER = Path(r"D:\Personal\Projects\rag-knowledge-graph\chunks")
+DOCUMENTS_FOLDER = Path(__file__).parent / "documents"
+CHUNKS_FOLDER = Path(__file__).parent / "chunks"
 
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 100
@@ -61,17 +61,26 @@ def chunk_text(text, source_file):
 
 CHUNKS_FOLDER.mkdir(exist_ok=True)
 
-for pdf_file in PAYSLIPS_FOLDER.glob("*.pdf"):
-    print(f"Processing: {pdf_file.name}")
+for subfolder in DOCUMENTS_FOLDER.iterdir():
+    if not subfolder.is_dir():
+        continue
     
-    text = extract_text_from_pdf(pdf_file)
-    text = expand_abbreviations(text)
-    chunks = chunk_text(text, source_file=pdf_file.name)
+    print(f"\n📁 Scanning: {subfolder.name}")
+    
+    for pdf_file in subfolder.glob("*.pdf"):
+        text = extract_text_from_pdf(pdf_file)
+        
+        if len(text.strip()) < 50:
+            print(f"  ⚠ Skipped: {pdf_file.name} (scanned image)")
+            continue
+        
+        text = expand_abbreviations(text)
+        chunks = chunk_text(text, source_file=pdf_file.name)
 
-    output_file = CHUNKS_FOLDER / (pdf_file.stem + ".json")
-    with open(output_file, "w", encoding="utf-8") as f:
-        json.dump(chunks, f, ensure_ascii=False, indent=2)
-    
-    print(f"  → {len(chunks)} chunks saved")
+        output_file = CHUNKS_FOLDER / (pdf_file.stem + ".json")
+        with open(output_file, "w", encoding="utf-8") as f:
+            json.dump(chunks, f, ensure_ascii=False, indent=2)
+        
+        print(f"  → {pdf_file.name}: {len(chunks)} chunks")
 
 print("\nChunking complete!")

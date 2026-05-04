@@ -2,8 +2,8 @@ from pathlib import Path
 import json
 import chromadb
 
-EMBEDDINGS_FOLDER = Path(r"D:\Personal\Projects\rag-knowledge-graph\embeddings")
-CHROMA_DB_FOLDER = Path(r"D:\Personal\Projects\rag-knowledge-graph\chromadb")
+EMBEDDINGS_FOLDER = Path(__file__).parent / "embeddings"
+CHROMA_DB_FOLDER = Path(__file__).parent / "chromadb"
 
 COLLECTION_NAME = "payslips"
 

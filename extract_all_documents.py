@@ -84,7 +84,12 @@ IMPORTANT RULES:
 - key_facts should capture the most important information regardless of document type
 - Use null for any string field not found
 - Use 0.0 for any numeric field not found
-- Never guess or estimate values"""
+- Never guess or estimate values
+- For person name: always use "Pratik Bhandarkar" even if the document says "Pratik Prakash Bhandarkar"
+- For Aioneers: always use exactly "Aioneers Technologies GmbH" regardless of how it appears in the document
+- For insurance: always use exactly "DAK Gesundheit" for any DAK variant
+- For banks: use "Sparkasse Heidelberg" or "N26 Bank Berlin" as appropriate
+- Organization names must always start with a capital letter    """
             },
             {
                 "role": "user",

@@ -51,7 +51,7 @@ def classify_question(state: GraphRAGState) -> GraphRAGState:
                 "content": """You are a question classifier. Analyze the question and return a JSON response.
 
 Classify into:
-"graph" — for structured data: salaries, taxes, totals, averages, comparisons, relationships, entities, which company, which bank, who, how many, list all
+"graph" — for structured data: salaries, taxes, totals, averages, comparisons, relationships, entities, which company, which bank, who, how many, list all, what types of documents, show all, which organizations, count, what documents, how many documents
 "rag" — for document content: summarise, explain, describe, what does it say
 
 Also extract any time/employer filters mentioned in the question.
@@ -111,38 +111,67 @@ The knowledge graph has the following schema:
 
 Nodes:
 - (:Person {name, city, address}) — there is only ONE Person in this graph
-- (:Company {name, city})
-- (:Bank {name})
-- (:InsuranceProvider {name})
-- (:Document {source_file, month, year, period, payment_date, 
-               gross_salary, net_salary, income_tax, church_tax,
-               solidarity_surcharge, health_insurance, pension_insurance,
-               unemployment_insurance, care_insurance})
+- (:Organization {name, city, org_type}) — parent type for all organizations
+- (:Employer {name, city, org_type}) — also labeled :Organization
+- (:InsuranceProvider {name, city, org_type}) — also labeled :Organization
+- (:GovernmentOffice {name, city, org_type}) — also labeled :Organization
+- (:Bank {name, city, org_type}) — also labeled :Organization
+- (:University {name, city, org_type}) — also labeled :Organization
+- (:Document {source_file, document_type, subfolder, summary, document_date, language,
+              gross_salary, net_salary, income_tax, church_tax, solidarity_surcharge,
+              health_insurance, pension_insurance, unemployment_insurance, care_insurance,
+              key_fact_1, key_fact_2, key_fact_3})
+
+Document types: payslip, income_tax_certificate, social_insurance_certificate, work_contract,
+               termination_letter, work_reference, contract_amendment, health_insurance_letter,
+               cv, other
 
 Relationships:
-- (Person)-[:WORKS_AT]->(Company)
-- (Person)-[:INSURED_BY]->(InsuranceProvider)
-- (Person)-[:BANKS_WITH]->(Bank)
+- (Person)-[:WORKS_AT]->(Organization)
+- (Person)-[:INSURED_BY]->(Organization)
+- (Person)-[:BANKS_WITH]->(Organization)
+- (Person)-[:STUDIED_AT]->(Organization)
+- (Person)-[:INTERACTED_WITH]->(Organization)
 - (Person)-[:RECEIVED]->(Document)
-- (Company)-[:ISSUED]->(Document)
+- (Organization)-[:ISSUED]->(Document)
 
 CRITICAL RULES:
 - There is only ONE Person — NEVER filter Person by name
-- Year is stored as a string e.g. "2023"
-- Month is three letter abbreviation e.g. "Feb"
-- Salary fields are floats
+- Year values in document_date are strings like "2023-01-15" or null
+- For payslip queries by year, use: WHERE d.document_date STARTS WITH "2024"
+- For payslip queries by month, filter on document_date or source_file
+- Salary fields are floats — only non-zero for payslip and income_tax_certificate types
+- document_type is a string — use exact matches like "payslip", "work_contract"
 - Only generate read queries — never MERGE, CREATE, DELETE or SET
 - Return only the Cypher query with no explanation and no markdown
 
 EXAMPLES:
 Question: "Which companies have I worked at?"
-Cypher: MATCH (p:Person)-[:WORKS_AT]->(c:Company) RETURN c.name
+Cypher: MATCH (p:Person)-[:WORKS_AT]->(o:Organization) RETURN o.name
 
 Question: "What was my total net salary in 2024?"
-Cypher: MATCH (p:Person)-[:RECEIVED]->(d:Document) WHERE d.year = "2024" RETURN SUM(d.net_salary) AS total
+Cypher: MATCH (p:Person)-[:RECEIVED]->(d:Document) WHERE d.document_type = "payslip" AND d.net_salary > 0 RETURN SUM(d.net_salary) AS total
 
-Question: "What was my total income tax across all years?"
-Cypher: MATCH (p:Person)-[:RECEIVED]->(d:Document) RETURN SUM(d.income_tax) AS total_tax
+Question: "Show me all my work contracts"
+Cypher: MATCH (p:Person)-[:RECEIVED]->(d:Document) WHERE d.document_type = "work_contract" RETURN d.source_file, d.summary, d.document_date
+
+Question: "What types of documents do I have?"
+Cypher: MATCH (d:Document) RETURN DISTINCT d.document_type, COUNT(d) AS count ORDER BY count DESC
+
+Question: "What was my total income tax?"
+Cypher: MATCH (p:Person)-[:RECEIVED]->(d:Document) WHERE d.document_type = "payslip" RETURN SUM(d.income_tax) AS total_tax
+
+Question: "Show me all termination letters"
+Cypher: MATCH (p:Person)-[:RECEIVED]->(d:Document) WHERE d.document_type = "termination_letter" RETURN d.source_file, d.summary, d.document_date
+
+Question: "Which organizations have I interacted with?"
+Cypher: MATCH (o:Organization) RETURN o.name, o.org_type
+
+Question: "List all organizations"
+Cypher: MATCH (o:Organization) RETURN o.name, o.org_type
+
+Question: "What types of documents do I have?"
+Cypher: MATCH (d:Document) RETURN d.document_type, COUNT(d) AS count ORDER BY count DESC
 """
 
 def query_knowledge_graph(state: GraphRAGState) -> GraphRAGState:
